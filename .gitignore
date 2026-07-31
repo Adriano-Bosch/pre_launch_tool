@@ -1,0 +1,63 @@
+## Visual Studio / .NET
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+bin/
+obj/
+[Oo]ut/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userprefs
+*.userosscache
+*.sln.docstates
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+!**/packages/build/
+nuget.config
+
+# MSBuild / Roslyn temporaries
+*.aps
+*.pch
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# Publish output
+publish/
+PublishOutput/
+
+# Crash dumps
+*.dmp
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Recycle bin
+$RECYCLE.BIN/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Logs
+*.log
+
+# Sensitive / secrets (never commit these)
+appsettings.*.json
+secrets.json
+*.secrets

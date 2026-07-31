@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>    <!-- Deixe como true se quiser o .NET incluso -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>    <!-- Ou win-x86 se for 32 bits -->
+    <PublishReadyToRun>true</PublishReadyToRun>    <!-- Melhora o desempenho -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>    <!-- Garante que libs nativas estejam dentro do exe -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>    <!-- Faz compressão pra reduzir tamanho -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\loadingScreen.png" />
+    <None Remove="Resources\logoBosch.png" />
+    <None Remove="Resources\supergrafico.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="GeminiApi\GeminiApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CredentialManagement" Version="1.0.2" />
+    <PackageReference Include="EPPlus" Version="6.4.3" />
+    <PackageReference Include="Google.GenAI" Version="0.15.0" />
+    <PackageReference Include="MahApps.Metro.IconPacks" Version="5.1.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2522.49" />
+    <PackageReference Include="System.Data.OleDb" Version="9.0.6" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.7" />
+    <PackageReference Include="Xceed.Words.NET" Version="1.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\logoBosch.png" />
+    <Resource Include="Resources\supergrafico.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SplashScreen Include="Resources\loadingScreen.png" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,483 @@
+﻿<Window x:Class="Pre_Launch_Tool.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        xmlns:local="clr-namespace:Pre_Launch_Tool"
+        mc:Ignorable="d"
+        Title="Pre Launch Tool" Height="730" Width="1000" MinWidth="700" MinHeight="600"
+        WindowStartupLocation="CenterScreen" ContentRendered="Window_ContentRendered">
+    <Window.Resources>
+        <Style TargetType="Label" x:Key="BoschFont">
+            <Setter Property="FontFamily" Value="BoschOfficeSans"/>
+        </Style>
+        <Style TargetType="Rectangle" x:Key="darkblueBosch">
+            <Setter Property="Fill" Value="#003E64"/>
+        </Style>
+        <Style TargetType="Label" x:Key="labelMandatoryInfo">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontFamily" Value="BoschOfficeSans"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style TargetType="Label" x:Key="labelInputs">
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontFamily" Value="BoschOfficeSans"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0, 0, 10, 0"/>
+        </Style>
+
+        <!-- Estilo padrão para todas as ComboBoxes -->
+        <Style TargetType="ComboBox" x:Key="standardComboBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontFamily" Value="BoschOfficeSans"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="8,4,8,4"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Setter Property="Height" Value="30"/>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Estilo específico para ComboBoxes com CheckBoxes -->
+        <Style TargetType="ComboBox" x:Key="checkboxComboBox" BasedOn="{StaticResource standardComboBox}">
+            <Setter Property="IsEditable" Value="True"/>
+            <Setter Property="IsReadOnly" Value="False"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Setter Property="Height" Value="30"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="80"/>
+            <RowDefinition Height="251*"/>
+            <RowDefinition Height="254*"/>
+            <RowDefinition Height="0*"/>
+        </Grid.RowDefinitions>
+
+        <!--Header - Logo, Name and Username-->
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="15"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="230"/>
+            </Grid.ColumnDefinitions>
+
+            <Image Grid.ColumnSpan="3"
+                   Source="/Resources/supergrafico.jpg" Stretch="UniformToFill"/>
+
+            <Rectangle Grid.Row="1" Grid.ColumnSpan="3" Fill="#F5F5F5"/>
+
+            <Image Grid.Row="1" Margin="50, 8, 0, 8"
+                   Source="/Resources/logoBosch.png"
+                   RenderOptions.EdgeMode="Aliased"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+            <Label x:Name="LbUsername" Grid.Row="1" Grid.Column="1" Content="Pre Launch Tool"
+                   VerticalAlignment="Center" HorizontalAlignment="Left" Margin="30, 0, 0, 0"
+                   FontSize="22" FontWeight="Bold" Style="{StaticResource BoschFont}"/>
+
+            <iconPacks:PackIconBoxIcons Kind="RegularUser"
+                                        Grid.Row="1" Grid.Column="2"
+                                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                                        Margin="20, 0, 0, 0" Width="23" Height="23"/>
+
+            <Label x:Name="LbUsernameMain" Grid.Row="1" Grid.Column="2"
+                   Content="Username" HorizontalAlignment="Left" VerticalAlignment="Center"
+                   Margin="60, 0, 0, 0" Style="{StaticResource BoschFont}" FontSize="16"/>
+        </Grid>
+
+        <!--Home page-->
+        <Grid x:Name="GrHomepage" Grid.Row="1" Visibility="Visible" Grid.RowSpan="2">
+            <!--Informações obrigatórias-->
+            <Grid Grid.Row="1" Margin="20" Height="120" VerticalAlignment="Top">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30"/> <!-- header bar -->
+                    <RowDefinition Height="40"/> <!-- inputs (taller to avoid overlap) -->
+                    <RowDefinition Height="40"/> <!-- labels under inputs (moved down) -->
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Rectangle Style="{StaticResource darkblueBosch}" Grid.ColumnSpan="4" Grid.Row="0"/>
+                <Label Content="Required Information" Grid.ColumnSpan="4" Grid.Row="0"
+                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                       Style="{StaticResource BoschFont}"
+                       FontSize="18" FontWeight="Bold" Foreground="White"/>
+
+                <!-- Inputs (single row) -->
+                <ComboBox x:Name="CbBU" Grid.Row="1" Grid.Column="0" Style="{StaticResource standardComboBox}" HorizontalAlignment="Stretch" Margin="5,2,5,2" />
+                <ComboBox x:Name="CbProduto" Grid.Row="1" Grid.Column="1" Style="{StaticResource standardComboBox}" HorizontalAlignment="Stretch" Margin="5,2,5,2" />
+                <ComboBox x:Name="CbRegiao" Grid.Row="1" Grid.Column="2" Style="{StaticResource checkboxComboBox}" HorizontalAlignment="Stretch" Margin="5,2,5,2" DropDownClosed="CbRegiao_DropDownClosed">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding Content}" IsChecked="{Binding IsChecked}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <!-- Market Share input stretches like the other controls to keep symmetry -->
+                <TextBox x:Name="TxMarketShare" Grid.Row="1" Grid.Column="3" Height="30" VerticalContentAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans" Margin="5,2,5,2" HorizontalAlignment="Stretch"/>
+
+                <!-- Labels below each input (moved further down to avoid overlap) -->
+                <Label Grid.Row="2" Grid.Column="0" Content="BU" Style="{StaticResource labelMandatoryInfo}" VerticalAlignment="Top" Margin="0,12,0,0"/>
+                <Label Grid.Row="2" Grid.Column="1" Content="Product" Style="{StaticResource labelMandatoryInfo}" VerticalAlignment="Top" Margin="0,12,0,0"/>
+                <Label Grid.Row="2" Grid.Column="2" Content="Region" Style="{StaticResource labelMandatoryInfo}" VerticalAlignment="Top" Margin="0,12,0,0"/>
+                <Label Grid.Row="2" Grid.Column="3" Content="Market Share (User Defined)" Style="{StaticResource labelMandatoryInfo}" VerticalAlignment="Top" Margin="0,12,0,0"/>
+            </Grid>
+
+            <!--Inputs - Grid Layout Container-->
+            <Grid Grid.Row="1" Margin="20, 130, 20, 80">
+                 <!-- TabControl para separar tipos de pesquisa -->
+                 <TabControl x:Name="TcSearchTabs">
+                    <!-- Aba 1: VEHICLE SEARCH - reaproveita todo o Grid existente -->
+                    <TabItem>
+                        <TabItem.Header>
+                            <Label Content="VEHICLE SEARCH" Style="{StaticResource BoschFont}" FontSize="16" FontWeight="Bold"/>
+                        </TabItem.Header>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!--Left Grid - All Inputs except BK-->
+                            <Grid Grid.Column="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <!-- Brand -->
+                                    <RowDefinition Height="15"/>
+                                    <RowDefinition Height="30"/>
+                                    <!-- Model -->
+                                    <RowDefinition Height="15"/>
+                                    <RowDefinition Height="30"/>
+                                    <!-- Year from -->
+                                    <RowDefinition Height="15"/>
+                                    <RowDefinition Height="30"/>
+                                    <!-- Year to -->
+                                    <RowDefinition Height="15"/>
+                                    <RowDefinition Height="30"/>
+                                    <!-- Fuel type -->
+                                    <RowDefinition Height="15"/>
+                                    <RowDefinition Height="30"/>
+                                    <!-- Explanation -->
+                                    <RowDefinition Height="15"/>
+                                    <RowDefinition Height="30"/>
+                                    <!-- Vehicle category -->
+                                    <RowDefinition Height="15"/>
+                                    <RowDefinition Height="30"/>
+                                    <!-- Market Share -->
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+
+                                <Rectangle Style="{StaticResource darkblueBosch}" Grid.ColumnSpan="2"/>
+                                <Label Content="Inputs" Grid.ColumnSpan="2"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Style="{StaticResource BoschFont}"
+                                       FontSize="18" FontWeight="Bold" Foreground="White"/>
+
+                                <!--Left Grid--> 
+                                <Label Grid.Row="2" Grid.Column="0" Style="{StaticResource labelInputs}" Content="Brand"/>
+                                <Label Grid.Row="4" Grid.Column="0" Style="{StaticResource labelInputs}" Content="Model"/>
+                                <Label Grid.Row="6" Grid.Column="0" Style="{StaticResource labelInputs}" Content="Year from"/>
+                                <Label Grid.Row="8" Grid.Column="0" Style="{StaticResource labelInputs}" Content="Year to"/>
+                                <Label Grid.Row="10" Grid.Column="0" Style="{StaticResource labelInputs}" Content="Fuel type"/>
+                                <Label Grid.Row="12" Grid.Column="0" Style="{StaticResource labelInputs}" Content="Explanation"/>
+                                <Label Grid.Row="14" Grid.Column="0" Style="{StaticResource labelInputs}" Content="Vehicle category"/>
+
+                                <ComboBox x:Name="CbMarca" Grid.Row="2" Grid.Column="1" Style="{StaticResource checkboxComboBox}"
+                                      DropDownClosed="CbMarca_DropDownClosed">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Content}" IsChecked="{Binding IsChecked}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <ComboBox x:Name="CbModelo" Grid.Row="4" Grid.Column="1" Style="{StaticResource checkboxComboBox}"
+                                         DropDownClosed="CbModelo_DropDownClosed">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Content}" IsChecked="{Binding IsChecked}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <ComboBox x:Name="CbAnoDe" Grid.Row="6" Grid.Column="1" Style="{StaticResource standardComboBox}"/>
+                                    <ComboBox x:Name="CbAnoAte" Grid.Row="8" Grid.Column="1" Style="{StaticResource standardComboBox}"/>
+                                    <ComboBox x:Name="CbTipoCombustivel" Grid.Row="10" Grid.Column="1" Style="{StaticResource checkboxComboBox}"
+                                      DropDownClosed="CbTipoCombustivel_DropDownClosed">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Content}" IsChecked="{Binding IsChecked}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <ComboBox x:Name="CbExplanation" Grid.Row="12" Grid.Column="1" Style="{StaticResource checkboxComboBox}"
+                                          DropDownClosed="CbExplanation_DropDownClosed">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Content}" IsChecked="{Binding IsChecked}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <ComboBox x:Name="CbCategoriaVeiculo" Grid.Row="14" Grid.Column="1" Style="{StaticResource checkboxComboBox}"
+                                      DropDownClosed="CbCategoriaVeiculo_DropDownClosed">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Content}" IsChecked="{Binding IsChecked}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <!-- TxMarketShare moved to Required Information -->
+                                </Grid>
+
+                                <!--Right Grid - Only BK: standardized rows to avoid overlap -->
+                                <Grid Grid.Column="2">
+                                    <Grid.RowDefinitions>
+                                        <!-- 0: Competitor header -->
+                                        <RowDefinition Height="30"/>
+                                        <!-- 1: gap -->
+                                        <RowDefinition Height="10"/>
+                                        <!-- 2: Competitor Name row -->
+                                        <RowDefinition Height="30"/>
+                                        <!-- 3: gap -->
+                                        <RowDefinition Height="10"/>
+                                        <!-- 4: Competitor Code row -->
+                                        <RowDefinition Height="30"/>
+                                        <!-- remainder -->
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Competitor header -->
+                                    <Rectangle Style="{StaticResource darkblueBosch}" Grid.Row="0" Grid.ColumnSpan="2" Height="30" VerticalAlignment="Top"/>
+                                    <Label Content="Competitor" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource BoschFont}" FontSize="18" FontWeight="Bold" Foreground="White" Background="Transparent"/>
+
+                                    <!-- Name: label left, field right -->
+                                    <Grid Grid.Row="2">
+                                         <Grid.ColumnDefinitions>
+                                             <ColumnDefinition Width="120"/>
+                                             <ColumnDefinition Width="*"/>
+                                         </Grid.ColumnDefinitions>
+                                         <Label Grid.Column="0" Content="Name" Style="{StaticResource labelInputs}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                         <ComboBox x:Name="CbCompetitor" Grid.Column="1" Height="30" VerticalContentAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans" Margin="6,0,10,0" HorizontalAlignment="Stretch" IsEditable="True"/>
+                                    </Grid>
+
+                                    <!-- Code: label left, field right -->
+                                    <Grid Grid.Row="4">
+                                         <Grid.ColumnDefinitions>
+                                             <ColumnDefinition Width="120"/>
+                                             <ColumnDefinition Width="*"/>
+                                         </Grid.ColumnDefinitions>
+                                         <Label Grid.Column="0" Content="Code" Style="{StaticResource labelInputs}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                         <ComboBox x:Name="CbCompetitorCode" Grid.Column="1" Height="30" VerticalContentAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans" Margin="6,0,10,0" HorizontalAlignment="Stretch" IsEditable="True"/>
+                                    </Grid>
+                                </Grid>
+                             </Grid>
+                         </TabItem>
+
+                        <!-- Aba 2: OE SEARCH -->
+                        <TabItem>
+                            <TabItem.Header>
+                                <Label Content="OE SEARCH" Style="{StaticResource BoschFont}" FontSize="16" FontWeight="Bold"/>
+                            </TabItem.Header>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Search by OE Number -->
+                                <Rectangle Style="{StaticResource darkblueBosch}" Grid.Row="0" Grid.ColumnSpan="2" Height="30" VerticalAlignment="Top"/>
+                                <Label Content="Search by OE Number" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource BoschFont}" FontSize="18" FontWeight="Bold" Foreground="White" Background="Transparent"/>
+                                <TextBox x:Name="TxSearchOENumber_OE" Grid.Row="2" Grid.Column="0" Height="30" VerticalContentAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans" Margin="0,0,10,0" HorizontalAlignment="Stretch"/>
+
+                                <!-- Competitor header -->
+                                <Rectangle Style="{StaticResource darkblueBosch}" Grid.Row="4" Grid.ColumnSpan="2" Height="30" VerticalAlignment="Top"/>
+                                <Label Content="Competitor" Grid.Row="4" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource BoschFont}" FontSize="18" FontWeight="Bold" Foreground="White" Background="Transparent"/>
+
+                                <!-- Name: label left, field right -->
+                                <Grid Grid.Row="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Label Grid.Column="0" Content="Name" Style="{StaticResource labelInputs}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="CbCompetitor_OE" Grid.Column="1" Height="30" VerticalContentAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans" Margin="6,0,10,0" HorizontalAlignment="Stretch" IsEditable="True"/>
+                                </Grid>
+
+                                <!-- Code: label left, field right -->
+                                <Grid Grid.Row="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Label Grid.Column="0" Content="Code" Style="{StaticResource labelInputs}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="CbCompetitorCode_OE" Grid.Column="1" Height="30" VerticalContentAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans" Margin="6,0,10,0" HorizontalAlignment="Stretch" IsEditable="True"/>
+                                </Grid>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- Aba 3: BK SEARCH -->
+                        <TabItem>
+                            <TabItem.Header>
+                                <Label Content="BK SEARCH" Style="{StaticResource BoschFont}" FontSize="16" FontWeight="Bold"/>
+                            </TabItem.Header>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Search by BK -->
+                                <Rectangle Style="{StaticResource darkblueBosch}" Grid.Row="0" Grid.ColumnSpan="2" Height="30" VerticalAlignment="Top"/>
+                                <Label Content="Search by BK" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource BoschFont}" FontSize="18" FontWeight="Bold" Foreground="White" Background="Transparent"/>
+                                <TextBox x:Name="TxSearchBK_BK" Grid.Row="2" Grid.Column="0" Height="30" VerticalContentAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans" Margin="0,0,10,0" HorizontalAlignment="Stretch"/>
+
+                                <!-- Competitor header -->
+                                <Rectangle Style="{StaticResource darkblueBosch}" Grid.Row="4" Grid.ColumnSpan="2" Height="30" VerticalAlignment="Top"/>
+                                <Label Content="Competitor" Grid.Row="4" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource BoschFont}" FontSize="18" FontWeight="Bold" Foreground="White" Background="Transparent"/>
+
+                                <!-- Name: label left, field right -->
+                                <Grid Grid.Row="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Label Grid.Column="0" Content="Name" Style="{StaticResource labelInputs}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="CbCompetitor_BK" Grid.Column="1" Height="30" VerticalContentAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans" Margin="6,0,10,0" HorizontalAlignment="Stretch" IsEditable="True"/>
+                                </Grid>
+
+                                <!-- Code: label left, field right -->
+                                <Grid Grid.Row="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Label Grid.Column="0" Content="Code" Style="{StaticResource labelInputs}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="CbCompetitorCode_BK" Grid.Column="1" Height="30" VerticalContentAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans" Margin="6,0,10,0" HorizontalAlignment="Stretch" IsEditable="True"/>
+                                </Grid>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+
+                <!-- Button Panel at the bottom -->
+                <Grid Grid.Row="1" VerticalAlignment="Bottom" Height="70">
+                    <!--Link to Wiki-->
+                    <Label x:Name="LbGotoWiki"
+                           HorizontalAlignment="Left" Margin="20, 0, 0, 10" Foreground="DarkBlue"
+                           FontWeight="Bold" FontSize="20" FontFamily="Bosch Office Sans"
+                           Cursor="Hand" MouseDown="LbGotoWiki_MouseDown">
+                        <TextBlock TextDecorations="Underline">Click here to access the Wiki</TextBlock>
+                    </Label>
+
+                    <!--Reset all inputs button-->
+                    <Button x:Name="BtResetAllInputs" VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                            Width="200" Height="50" Margin="0, 0, 240, 10"
+                            Content="CLEAR" VerticalContentAlignment="Center"
+                            FontFamily="BoschOfficeSans" FontSize="22" FontWeight="Bold"
+                            Click="BtResetAllInputs_Click"/>
+
+                    <!--Search button-->
+                    <Button x:Name="BtPesquisar" VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                            Width="200" Height="50" Margin="0, 0, 20, 10"
+                            Content="SEARCH" VerticalContentAlignment="Center"
+                            FontFamily="BoschOfficeSans" FontSize="22" FontWeight="Bold"
+                            Click="BtPesquisar_Click"/>
+                </Grid>
+            </Grid>
+
+            <!--Preview page (kept hidden for compatibility with code)--> 
+            <Grid x:Name="GrReportPage" Grid.Row="1" Visibility="Collapsed" Background="White" Grid.RowSpan="2">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="50"/>
+                        <RowDefinition/>
+                        <RowDefinition Height="80"/>
+                    </Grid.RowDefinitions>
+
+                    <Label x:Name="LbPreviewBU" Grid.Row="0" Visibility="Collapsed" />
+                    <Label x:Name="LbPreviewProduto" Grid.Row="0" Visibility="Collapsed" />
+
+                    <DataGrid x:Name="DgPreview" Grid.Row="1" Margin="0, 5, 0, 0" AutoGenerateColumns="True" Visibility="Collapsed" />
+
+                    <Button x:Name="BtConfirmInfo" Grid.Row="2" Visibility="Collapsed" Click="BtConfirmInfo_Click" />
+                    <Button x:Name="BtGenerateReport" Grid.Row="2" Visibility="Collapsed" Click="BtGenerateReport_Click" />
+
+                    <iconPacks:PackIconModern x:Name="IcGoBack" Grid.Row="2" Visibility="Collapsed" />
+                </Grid>
+            </Grid>
+
+            <!--Loading cover-->
+            <Grid x:Name="GrLoadingCover" Grid.Row="1" Visibility="Hidden" Grid.RowSpan="2">
+                <Rectangle Fill="White" Opacity=".7"/>
+                <Rectangle Fill="White" VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                           Width="350" Height="50" Margin="15"/>
+                <Label Content="Loading information..." VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                       Margin="20" FontSize="26" FontWeight="Bold"/>
+            </Grid>
+
+        </Grid>
+    </Window>

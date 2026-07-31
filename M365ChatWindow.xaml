@@ -1,0 +1,23 @@
+<Window x:Class="Pre_Launch_Tool.M365ChatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="Pre Launch Tool - AI Analysis" Height="900" Width="1200"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Background="#F5F5F5" VerticalAlignment="Center" Margin="10,0">
+            <ProgressBar x:Name="PbLoading" Width="120" Height="12" IsIndeterminate="True" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBlock Text="Aguarde o carregamento da pagina e o envio automatico do conteudo..."
+                       VerticalAlignment="Center" FontSize="14" FontFamily="BoschOfficeSans"
+                       x:Name="TbStatus"/>
+        </StackPanel>
+
+        <wv2:WebView2 x:Name="WebView" Grid.Row="1"/>
+    </Grid>
+</Window>
