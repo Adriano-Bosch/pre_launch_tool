@@ -346,16 +346,25 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
 
             viabilityPrompt = LoadViabilityPromptTemplate();
 
-            // Set username label and email address
-            using (var context = new PrincipalContext(ContextType.Domain))
+            // Set username label and email address. Domain lookup may fail on some environments.
+            try
             {
-                UserPrincipal user = UserPrincipal.Current;
-
-                if (user != null)
+                using (var context = new PrincipalContext(ContextType.Domain))
                 {
-                    LbUsernameMain.Content = $"{user.GivenName} {user.Surname}";
-                    emailAddress = user.EmailAddress;
+                    UserPrincipal user = UserPrincipal.Current;
+
+                    if (user != null)
+                    {
+                        LbUsernameMain.Content = $"{user.GivenName} {user.Surname}";
+                        emailAddress = user.EmailAddress;
+                    }
                 }
+            }
+            catch
+            {
+                string fallbackUser = Environment.UserName;
+                LbUsernameMain.Content = fallbackUser;
+                emailAddress = string.Empty;
             }
 
             previewItems = new ObservableCollection<PreviewItem>();
