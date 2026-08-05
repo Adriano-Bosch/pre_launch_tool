@@ -44,6 +44,11 @@ namespace Pre_Launch_Tool
             @"\\bosch.com\dfsrb\DfsBR\loc\Ca1\AA\tr_rbr\Inter_Setor\Master_Data\09. Pre-Launch Tool\[não alterar] banco de dados\PE_DB_v1.accdb",
             @"S:\AA\tr_rbr\Inter_Setor\Master_Data\09. Pre-Launch Tool\[não alterar] banco de dados\PE_DB_v1.accdb"
         };
+        private static readonly string[] DbSearchRoots =
+        {
+            @"\\bosch.com\dfsrb\DfsBR\loc\Ca1\AA\tr_rbr\Inter_Setor\Master_Data\09. Pre-Launch Tool",
+            @"S:\AA\tr_rbr\Inter_Setor\Master_Data\09. Pre-Launch Tool"
+        };
         private static readonly string[] OleDbProviderCandidates =
         {
             "Microsoft.ACE.OLEDB.16.0",
@@ -51,6 +56,7 @@ namespace Pre_Launch_Tool
         };
         private const string AppLogFolderName = "Pre_Launch_Tool\\Logs";
 
+        readonly string sourceDbPath;
         readonly string dbPath;
         readonly string activeOleDbProvider;
         readonly string startupDiagnosticLogPath;
@@ -303,8 +309,34 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                     return candidate;
             }
 
+            foreach (var root in DbSearchRoots)
+            {
+                string? discovered = TryFindDatabaseInRoot(root);
+                if (!string.IsNullOrWhiteSpace(discovered))
+                    return discovered;
+            }
+
             // If none is reachable now, keep UNC as default so connection errors point to the canonical path.
             return DbPathCandidates[0];
+        }
+
+        private static string? TryFindDatabaseInRoot(string root)
+        {
+            try
+            {
+                if (!Directory.Exists(root))
+                    return null;
+
+                var found = Directory
+                    .EnumerateFiles(root, "PE_DB_v1.accdb", SearchOption.AllDirectories)
+                    .FirstOrDefault();
+
+                return string.IsNullOrWhiteSpace(found) ? null : found;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static bool IsOleDbProviderRegistered(string provider)
@@ -359,18 +391,48 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             }
         }
 
+        private string ResolveConnectionDatabasePath(string preferredSourcePath)
+        {
+            try
+            {
+                if (!File.Exists(preferredSourcePath))
+                {
+                    AppendStartupDiagnostic(startupDiagnosticLogPath, "Source DB path does not exist. Using source path directly.");
+                    return preferredSourcePath;
+                }
+
+                string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string cacheFolder = Path.Combine(baseFolder, "Pre_Launch_Tool", "Cache");
+                Directory.CreateDirectory(cacheFolder);
+
+                string localCopyPath = Path.Combine(cacheFolder, "PE_DB_v1_runtime.accdb");
+                File.Copy(preferredSourcePath, localCopyPath, true);
+
+                AppendStartupDiagnostic(startupDiagnosticLogPath, $"Database copied to local cache: {localCopyPath}");
+                return localCopyPath;
+            }
+            catch (Exception ex)
+            {
+                AppendStartupDiagnostic(startupDiagnosticLogPath, $"Failed to create local DB cache copy. Fallback to source path. Error: {ex.Message}");
+                return preferredSourcePath;
+            }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
-            dbPath = ResolveDatabasePath();
+            sourceDbPath = ResolveDatabasePath();
             activeOleDbProvider = ResolveOleDbProvider();
+            startupDiagnosticLogPath = CreateStartupDiagnosticLogPath();
+            dbPath = ResolveConnectionDatabasePath(sourceDbPath);
             // App performs read-only queries; opening in read mode avoids lock-file write issues on shared folders.
             connectionString = $@"Provider={activeOleDbProvider};Data Source={dbPath};Persist Security Info=False;Mode=Read;";
-            startupDiagnosticLogPath = CreateStartupDiagnosticLogPath();
             AppendStartupDiagnostic(startupDiagnosticLogPath, "MainWindow initialized.");
             AppendStartupDiagnostic(startupDiagnosticLogPath, $"Process architecture: {(Environment.Is64BitProcess ? "x64" : "x86")}");
-            AppendStartupDiagnostic(startupDiagnosticLogPath, $"Resolved DB path: {dbPath}");
-            AppendStartupDiagnostic(startupDiagnosticLogPath, $"DB path exists: {File.Exists(dbPath)}");
+            AppendStartupDiagnostic(startupDiagnosticLogPath, $"Resolved source DB path: {sourceDbPath}");
+            AppendStartupDiagnostic(startupDiagnosticLogPath, $"Source DB path exists: {File.Exists(sourceDbPath)}");
+            AppendStartupDiagnostic(startupDiagnosticLogPath, $"Connection DB path: {dbPath}");
+            AppendStartupDiagnostic(startupDiagnosticLogPath, $"Connection DB path exists: {File.Exists(dbPath)}");
             AppendStartupDiagnostic(startupDiagnosticLogPath, $"OLE DB provider: {activeOleDbProvider}");
 
             viabilityPrompt = LoadViabilityPromptTemplate();
@@ -604,7 +666,8 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                     AppendStartupDiagnostic(startupDiagnosticLogPath, "Data loaded empty: one or more core datasets returned zero rows.");
                     MessageBox.Show(
                         "The application connected, but no data was loaded from Access.\n\n" +
-                        $"DB path: {dbPath}\n" +
+                        $"Source DB path: {sourceDbPath}\n" +
+                        $"Connection DB path: {dbPath}\n" +
                         $"OLE DB provider: {activeOleDbProvider}\n\n" +
                         "A diagnostic log was saved at:\n" +
                         startupDiagnosticLogPath,
@@ -625,7 +688,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                     : string.Empty;
 
                 MessageBox.Show(
-                    $"Erro ao carregar dados iniciais: {ex.Message}\n\nProvider OLE DB em uso:\n{activeOleDbProvider}\n\nCaminho da base em uso:\n{dbPath}\n\nValide o acesso de rede ao caminho UNC:\n{DbPathCandidates[0]}{providerHint}\n\nLog de diagnostico:\n{startupDiagnosticLogPath}",
+                    $"Erro ao carregar dados iniciais: {ex.Message}\n\nProvider OLE DB em uso:\n{activeOleDbProvider}\n\nCaminho da base de origem:\n{sourceDbPath}\n\nCaminho da base em uso na conexao:\n{dbPath}\n\nValide o acesso de rede ao caminho UNC:\n{DbPathCandidates[0]}{providerHint}\n\nLog de diagnostico:\n{startupDiagnosticLogPath}",
                     "Erro ao carregar bases",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
