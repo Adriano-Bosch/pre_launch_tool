@@ -49,9 +49,11 @@ namespace Pre_Launch_Tool
             "Microsoft.ACE.OLEDB.16.0",
             "Microsoft.ACE.OLEDB.12.0"
         };
+        private const string AppLogFolderName = "Pre_Launch_Tool\\Logs";
 
         readonly string dbPath;
         readonly string activeOleDbProvider;
+        readonly string startupDiagnosticLogPath;
         private string templatePath;
         private string emailAddress;
         readonly string connectionString;
@@ -337,12 +339,39 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 || message.IndexOf("não está registrado", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        private static string CreateStartupDiagnosticLogPath()
+        {
+            string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string logFolder = Path.Combine(baseFolder, AppLogFolderName);
+            Directory.CreateDirectory(logFolder);
+            return Path.Combine(logFolder, $"startup_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+        }
+
+        private static void AppendStartupDiagnostic(string logPath, string message)
+        {
+            try
+            {
+                File.AppendAllText(logPath, $"[{DateTime.Now:O}] {message}{Environment.NewLine}", Encoding.UTF8);
+            }
+            catch
+            {
+                // Diagnostics must never crash the app.
+            }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
             dbPath = ResolveDatabasePath();
             activeOleDbProvider = ResolveOleDbProvider();
-            connectionString = $@"Provider={activeOleDbProvider};Data Source={dbPath};Persist Security Info=False;";
+            // App performs read-only queries; opening in read mode avoids lock-file write issues on shared folders.
+            connectionString = $@"Provider={activeOleDbProvider};Data Source={dbPath};Persist Security Info=False;Mode=Read;";
+            startupDiagnosticLogPath = CreateStartupDiagnosticLogPath();
+            AppendStartupDiagnostic(startupDiagnosticLogPath, "MainWindow initialized.");
+            AppendStartupDiagnostic(startupDiagnosticLogPath, $"Process architecture: {(Environment.Is64BitProcess ? "x64" : "x86")}");
+            AppendStartupDiagnostic(startupDiagnosticLogPath, $"Resolved DB path: {dbPath}");
+            AppendStartupDiagnostic(startupDiagnosticLogPath, $"DB path exists: {File.Exists(dbPath)}");
+            AppendStartupDiagnostic(startupDiagnosticLogPath, $"OLE DB provider: {activeOleDbProvider}");
 
             viabilityPrompt = LoadViabilityPromptTemplate();
 
@@ -365,6 +394,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 string fallbackUser = Environment.UserName;
                 LbUsernameMain.Content = fallbackUser;
                 emailAddress = string.Empty;
+                AppendStartupDiagnostic(startupDiagnosticLogPath, "Domain user lookup failed. Fallback to local username.");
             }
 
             previewItems = new ObservableCollection<PreviewItem>();
@@ -562,20 +592,40 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
         {
             try
             {
+                AppendStartupDiagnostic(startupDiagnosticLogPath, "FirstLoadInfos started.");
+
                 // Usar uma estratégia de pré-carregamento para todos os dados relevantes
                 await PreLoadAllData();
 
+                AppendStartupDiagnostic(startupDiagnosticLogPath, $"PreLoadAllData completed. Fleet rows: {baseDataTable.Count}");
+
+                if (baseDataTable.Count == 0 || ((List<string>)QueryCache.Instance.GetStaticData("BUs")).Count == 0)
+                {
+                    AppendStartupDiagnostic(startupDiagnosticLogPath, "Data loaded empty: one or more core datasets returned zero rows.");
+                    MessageBox.Show(
+                        "The application connected, but no data was loaded from Access.\n\n" +
+                        $"DB path: {dbPath}\n" +
+                        $"OLE DB provider: {activeOleDbProvider}\n\n" +
+                        "A diagnostic log was saved at:\n" +
+                        startupDiagnosticLogPath,
+                        "Access data not loaded",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+
                 // Agora populamos todos os controles a partir dos dados pré-carregados
                 PopulateControlsFromPreloadedData();
+                AppendStartupDiagnostic(startupDiagnosticLogPath, "PopulateControlsFromPreloadedData completed.");
             }
             catch (Exception ex)
             {
+                AppendStartupDiagnostic(startupDiagnosticLogPath, $"FirstLoadInfos failed: {ex}");
                 string providerHint = LooksLikeMissingAceProvider(ex)
                     ? "\n\nPossivel causa: Microsoft Access Database Engine (ACE) nao instalado/registrado neste PC.\nPara este executavel (x64), instale o Access Database Engine 2016 x64."
                     : string.Empty;
 
                 MessageBox.Show(
-                    $"Erro ao carregar dados iniciais: {ex.Message}\n\nProvider OLE DB em uso:\n{activeOleDbProvider}\n\nCaminho da base em uso:\n{dbPath}\n\nValide o acesso de rede ao caminho UNC:\n{DbPathCandidates[0]}{providerHint}",
+                    $"Erro ao carregar dados iniciais: {ex.Message}\n\nProvider OLE DB em uso:\n{activeOleDbProvider}\n\nCaminho da base em uso:\n{dbPath}\n\nValide o acesso de rede ao caminho UNC:\n{DbPathCandidates[0]}{providerHint}\n\nLog de diagnostico:\n{startupDiagnosticLogPath}",
                     "Erro ao carregar bases",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -607,6 +657,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             List<string> listProdutos = new List<string>();
             List<string> listRegioes = new List<string>();
             List<EposDataItem> listEposDataItems = new List<EposDataItem>();
+            AppendStartupDiagnostic(startupDiagnosticLogPath, "PreLoadAllData started.");
 
             await UpdateLoadingStatusAsync("Connecting to database...", 10);
             
@@ -737,10 +788,12 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             QueryCache.Instance.SetStaticData("BUs", listBUs.OrderBy(b => b).ToList());
             QueryCache.Instance.SetStaticData("AllEposDataItems", listEposDataItems.OrderBy(item => item.BU).ThenBy(item => item.Produto).ToList());
             QueryCache.Instance.SetStaticData("Regioes", listRegioes);
+            AppendStartupDiagnostic(startupDiagnosticLogPath, $"Data summary: BUs={listBUs.Count}, EPOS={listEposDataItems.Count}, Regions={listRegioes.Count}, Fleet={baseDataTable.Count}, Competitors={competitorTable.Count}");
 
             // Populate competitor combos after data load
             PopulateCompetitorCombos();
             await UpdateLoadingStatusAsync("Databases loaded", 100);
+            AppendStartupDiagnostic(startupDiagnosticLogPath, "PreLoadAllData finished.");
         }
 
         // Método para popular os controles a partir dos dados pré-carregados
