@@ -44,8 +44,14 @@ namespace Pre_Launch_Tool
             @"\\bosch.com\dfsrb\DfsBR\loc\Ca1\AA\tr_rbr\Inter_Setor\Master_Data\09. Pre-Launch Tool\[não alterar] banco de dados\PE_DB_v1.accdb",
             @"S:\AA\tr_rbr\Inter_Setor\Master_Data\09. Pre-Launch Tool\[não alterar] banco de dados\PE_DB_v1.accdb"
         };
+        private static readonly string[] OleDbProviderCandidates =
+        {
+            "Microsoft.ACE.OLEDB.16.0",
+            "Microsoft.ACE.OLEDB.12.0"
+        };
 
         readonly string dbPath;
+        readonly string activeOleDbProvider;
         private string templatePath;
         private string emailAddress;
         readonly string connectionString;
@@ -299,11 +305,44 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             return DbPathCandidates[0];
         }
 
+        private static bool IsOleDbProviderRegistered(string provider)
+        {
+            try
+            {
+                return Type.GetTypeFromProgID(provider, throwOnError: false) != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string ResolveOleDbProvider()
+        {
+            foreach (var provider in OleDbProviderCandidates)
+            {
+                if (IsOleDbProviderRegistered(provider))
+                    return provider;
+            }
+
+            // Keep legacy default for backwards compatibility; load error will show actionable guidance.
+            return OleDbProviderCandidates[1];
+        }
+
+        private static bool LooksLikeMissingAceProvider(Exception ex)
+        {
+            string message = ex.Message ?? string.Empty;
+            return message.IndexOf("not registered", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("nao esta registrado", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("não está registrado", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         public MainWindow()
         {
             InitializeComponent();
             dbPath = ResolveDatabasePath();
-            connectionString = $@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={dbPath};Persist Security Info=False;";
+            activeOleDbProvider = ResolveOleDbProvider();
+            connectionString = $@"Provider={activeOleDbProvider};Data Source={dbPath};Persist Security Info=False;";
 
             viabilityPrompt = LoadViabilityPromptTemplate();
 
@@ -522,8 +561,12 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             }
             catch (Exception ex)
             {
+                string providerHint = LooksLikeMissingAceProvider(ex)
+                    ? "\n\nPossivel causa: Microsoft Access Database Engine (ACE) nao instalado/registrado neste PC.\nPara este executavel (x64), instale o Access Database Engine 2016 x64."
+                    : string.Empty;
+
                 MessageBox.Show(
-                    $"Erro ao carregar dados iniciais: {ex.Message}\n\nCaminho da base em uso:\n{dbPath}\n\nValide o acesso de rede ao caminho UNC:\n{DbPathCandidates[0]}",
+                    $"Erro ao carregar dados iniciais: {ex.Message}\n\nProvider OLE DB em uso:\n{activeOleDbProvider}\n\nCaminho da base em uso:\n{dbPath}\n\nValide o acesso de rede ao caminho UNC:\n{DbPathCandidates[0]}{providerHint}",
                     "Erro ao carregar bases",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
