@@ -556,14 +556,14 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             List<string> listRegioes = new List<string>();
             List<EposDataItem> listEposDataItems = new List<EposDataItem>();
 
-            await UpdateLoadingStatusAsync("Conectando na base...", 10);
+            await UpdateLoadingStatusAsync("Connecting to database...", 10);
             
             using (OleDbConnection con = new OleDbConnection(connectionString))
             {
                 await con.OpenAsync();
 
                 // Carregar caminho do template de relatório
-                await UpdateLoadingStatusAsync("Carregando configuracoes...", 20);
+                await UpdateLoadingStatusAsync("Loading settings...", 20);
                 using (OleDbCommand com = new OleDbCommand("SELECT TEMPLATE_PATH FROM SETTINGS", con))
                 {
                     using (OleDbDataReader reader = (OleDbDataReader)await com.ExecuteReaderAsync())
@@ -576,7 +576,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 }
 
                 // Carregar BUs e Produtos da tabela epos_data
-                await UpdateLoadingStatusAsync("Carregando BU e produtos...", 35);
+                await UpdateLoadingStatusAsync("Loading BU and products...", 35);
                 using (OleDbCommand com = new OleDbCommand("SELECT DISTINCT BU, PRODUCT FROM epos_data", con))
                 {
                     using (OleDbDataReader reader = (OleDbDataReader)await com.ExecuteReaderAsync())
@@ -595,7 +595,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 }
 
                 // Carregar Regiões da tabela epos_data
-                await UpdateLoadingStatusAsync("Carregando regioes...", 50);
+                await UpdateLoadingStatusAsync("Loading regions...", 50);
                 using (OleDbCommand com = new OleDbCommand("SELECT DISTINCT COUNTRY FROM epos_data", con))
                 {
                     using (OleDbDataReader reader = (OleDbDataReader)await com.ExecuteReaderAsync())
@@ -610,7 +610,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 }
 
                 // A parte mais importante: pré-carregar TODOS os dados da base_frota_total para manipulação em memória
-                await UpdateLoadingStatusAsync("Carregando base de frota...", 75);
+                await UpdateLoadingStatusAsync("Loading fleet database...", 75);
                 using (OleDbCommand com = new OleDbCommand(
                     "SELECT SHORT, COUNTRY, FAS_POPULATION, BRAND, VEHICLE_TYPE, DATA, ENGINE_INFO, FUEL_TYPE, EXPLANATION, V_CLASS FROM base_frota_total", con))
                 {
@@ -656,7 +656,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 // Load competitor table cod_concorrente (MARKENBEZ -> TW -> TWNR_VERD)
                 try
                 {
-                    await UpdateLoadingStatusAsync("Carregando base de concorrentes...", 90);
+                    await UpdateLoadingStatusAsync("Loading competitor database...", 90);
                     competitorTable.Clear();
                     using (OleDbCommand com = new OleDbCommand("SELECT MARKENBEZ, TW, TWNR_VERD FROM cod_concorrente", con))
                     using (OleDbDataReader reader = (OleDbDataReader)await com.ExecuteReaderAsync())
@@ -681,14 +681,14 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             }
 
             // Configurar os dados para uso posterior
-            await UpdateLoadingStatusAsync("Finalizando carregamento...", 98);
+            await UpdateLoadingStatusAsync("Finalizing load...", 98);
             QueryCache.Instance.SetStaticData("BUs", listBUs.OrderBy(b => b).ToList());
             QueryCache.Instance.SetStaticData("AllEposDataItems", listEposDataItems.OrderBy(item => item.BU).ThenBy(item => item.Produto).ToList());
             QueryCache.Instance.SetStaticData("Regioes", listRegioes);
 
             // Populate competitor combos after data load
             PopulateCompetitorCombos();
-            await UpdateLoadingStatusAsync("Bases carregadas", 100);
+            await UpdateLoadingStatusAsync("Databases loaded", 100);
         }
 
         // Método para popular os controles a partir dos dados pré-carregados
@@ -2452,7 +2452,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 GrLoadingCover.Visibility = Visibility.Visible;
                 PbLoadingBases.IsIndeterminate = false;
                 PbLoadingBases.Value = 0;
-                LbLoadingStatus.Content = "Iniciando carregamento das bases...";
+                LbLoadingStatus.Content = "Starting database load...";
             }
             catch { }
 

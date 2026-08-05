@@ -477,7 +477,7 @@
                         Width="430" Margin="15" Padding="14"
                         Background="White" BorderBrush="#D9D9D9" BorderThickness="1" CornerRadius="6">
                     <StackPanel>
-                        <Label x:Name="LbLoadingStatus" Content="Carregando bases..."
+                           <Label x:Name="LbLoadingStatus" Content="Loading databases..."
                                Padding="0" FontSize="21" FontWeight="Bold" FontFamily="BoschOfficeSans"/>
                         <ProgressBar x:Name="PbLoadingBases" Height="12" Margin="0,8,0,0"
                                      IsIndeterminate="False" Minimum="0" Maximum="100" Value="0"/>
