@@ -38,11 +38,14 @@ namespace Pre_Launch_Tool
         // Loaded AI prompt template
         private string? viabilityPrompt;
 
-        // dev dbPath
-        //readonly string dbPath = @"S:\AA\tr_rbr\Inter_Setor\MEETINGS_AND_OPLS\2) Meetings and WS\Data Driven\4. Foco de trabalho 1 - Pré-Launch\3. Desenvolvimento_ferramenta\1. Bases_de_dados\PE_DB_v1.accdb";
+        // Prefer UNC path because mapped drive letters may not exist for all users.
+        private static readonly string[] DbPathCandidates =
+        {
+            @"\\bosch.com\dfsrb\DfsBR\loc\Ca1\AA\tr_rbr\Inter_Setor\Master_Data\09. Pre-Launch Tool\[não alterar] banco de dados\PE_DB_v1.accdb",
+            @"S:\AA\tr_rbr\Inter_Setor\Master_Data\09. Pre-Launch Tool\[não alterar] banco de dados\PE_DB_v1.accdb"
+        };
 
-        // user dbPath
-        readonly string dbPath = @"S:\AA\tr_rbr\Inter_Setor\Master_Data\09. Pre-Launch Tool\[não alterar] banco de dados\PE_DB_v1.accdb";
+        readonly string dbPath;
         private string templatePath;
         private string emailAddress;
         readonly string connectionString;
@@ -284,9 +287,22 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                         return EmbeddedViabilityPrompt;
                 }
 
+        private static string ResolveDatabasePath()
+        {
+            foreach (var candidate in DbPathCandidates)
+            {
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            // If none is reachable now, keep UNC as default so connection errors point to the canonical path.
+            return DbPathCandidates[0];
+        }
+
         public MainWindow()
         {
             InitializeComponent();
+            dbPath = ResolveDatabasePath();
             connectionString = $@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={dbPath};Persist Security Info=False;";
 
             viabilityPrompt = LoadViabilityPromptTemplate();
@@ -506,7 +522,29 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erro ao carregar dados iniciais: {ex.Message}");
+                MessageBox.Show(
+                    $"Erro ao carregar dados iniciais: {ex.Message}\n\nCaminho da base em uso:\n{dbPath}\n\nValide o acesso de rede ao caminho UNC:\n{DbPathCandidates[0]}",
+                    "Erro ao carregar bases",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private async Task UpdateLoadingStatusAsync(string status, int? progressPercent = null)
+        {
+            try
+            {
+                LbLoadingStatus.Content = status;
+                if (progressPercent.HasValue)
+                {
+                    int normalized = Math.Max(0, Math.Min(100, progressPercent.Value));
+                    PbLoadingBases.Value = normalized;
+                }
+                await Dispatcher.Yield(DispatcherPriority.Background);
+            }
+            catch
+            {
+                // Keep loading flow resilient even if UI update fails.
             }
         }
 
@@ -517,12 +555,15 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             List<string> listProdutos = new List<string>();
             List<string> listRegioes = new List<string>();
             List<EposDataItem> listEposDataItems = new List<EposDataItem>();
+
+            await UpdateLoadingStatusAsync("Conectando na base...", 10);
             
             using (OleDbConnection con = new OleDbConnection(connectionString))
             {
                 await con.OpenAsync();
 
                 // Carregar caminho do template de relatório
+                await UpdateLoadingStatusAsync("Carregando configuracoes...", 20);
                 using (OleDbCommand com = new OleDbCommand("SELECT TEMPLATE_PATH FROM SETTINGS", con))
                 {
                     using (OleDbDataReader reader = (OleDbDataReader)await com.ExecuteReaderAsync())
@@ -535,6 +576,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 }
 
                 // Carregar BUs e Produtos da tabela epos_data
+                await UpdateLoadingStatusAsync("Carregando BU e produtos...", 35);
                 using (OleDbCommand com = new OleDbCommand("SELECT DISTINCT BU, PRODUCT FROM epos_data", con))
                 {
                     using (OleDbDataReader reader = (OleDbDataReader)await com.ExecuteReaderAsync())
@@ -553,6 +595,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 }
 
                 // Carregar Regiões da tabela epos_data
+                await UpdateLoadingStatusAsync("Carregando regioes...", 50);
                 using (OleDbCommand com = new OleDbCommand("SELECT DISTINCT COUNTRY FROM epos_data", con))
                 {
                     using (OleDbDataReader reader = (OleDbDataReader)await com.ExecuteReaderAsync())
@@ -567,6 +610,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 }
 
                 // A parte mais importante: pré-carregar TODOS os dados da base_frota_total para manipulação em memória
+                await UpdateLoadingStatusAsync("Carregando base de frota...", 75);
                 using (OleDbCommand com = new OleDbCommand(
                     "SELECT SHORT, COUNTRY, FAS_POPULATION, BRAND, VEHICLE_TYPE, DATA, ENGINE_INFO, FUEL_TYPE, EXPLANATION, V_CLASS FROM base_frota_total", con))
                 {
@@ -612,6 +656,7 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
                 // Load competitor table cod_concorrente (MARKENBEZ -> TW -> TWNR_VERD)
                 try
                 {
+                    await UpdateLoadingStatusAsync("Carregando base de concorrentes...", 90);
                     competitorTable.Clear();
                     using (OleDbCommand com = new OleDbCommand("SELECT MARKENBEZ, TW, TWNR_VERD FROM cod_concorrente", con))
                     using (OleDbDataReader reader = (OleDbDataReader)await com.ExecuteReaderAsync())
@@ -636,12 +681,14 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
             }
 
             // Configurar os dados para uso posterior
+            await UpdateLoadingStatusAsync("Finalizando carregamento...", 98);
             QueryCache.Instance.SetStaticData("BUs", listBUs.OrderBy(b => b).ToList());
             QueryCache.Instance.SetStaticData("AllEposDataItems", listEposDataItems.OrderBy(item => item.BU).ThenBy(item => item.Produto).ToList());
             QueryCache.Instance.SetStaticData("Regioes", listRegioes);
 
             // Populate competitor combos after data load
             PopulateCompetitorCombos();
+            await UpdateLoadingStatusAsync("Bases carregadas", 100);
         }
 
         // Método para popular os controles a partir dos dados pré-carregados
@@ -2400,6 +2447,15 @@ REGRA ESPECIAL PARA TABELAS COM MAIS DE 8 COLUNAS
 
         private async void Window_ContentRendered(object sender, EventArgs e)
         {
+            try
+            {
+                GrLoadingCover.Visibility = Visibility.Visible;
+                PbLoadingBases.IsIndeterminate = false;
+                PbLoadingBases.Value = 0;
+                LbLoadingStatus.Content = "Iniciando carregamento das bases...";
+            }
+            catch { }
+
             Mouse.SetCursor(Cursors.Wait);
             await FirstLoadInfos();
             Mouse.SetCursor(null);
